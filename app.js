@@ -10,6 +10,7 @@ var express = require('express');
 var wechat = require('wechat');
 var search = require('./book');
 var request = require('request');
+var search_CET = require('./cet');
 var config = {
   token: '123456lhy',
   appid: 'wx9dfb24e7650006a8',
@@ -28,7 +29,24 @@ app.use(express.query());
 app.use('/wechat', wechat(config, function (req, res, next) {
     var message = req.weixin;
     if(message.MsgType === "text"){
-        var query = search.searchBook(message.Content, function(error, book) {
+        if(message.Content.substring(0,3) == "CET") {
+          var CET = search_CET.searchCET(message.Content,function(error,result){
+            var ret_result = '姓名:' + result.name +
+                             '\n学校:' + result.school +
+                             '\n考试类别:' + result.cata +
+                             '\n准考证号:' + result.id +
+                             '\n考试时间:' + result.time +
+                             '\n听力:' + result.listen +
+                             '\n阅读：' + result.read +
+                             '\n写和翻译：' + result.write +
+                             '\n总分：' + result.score
+            res.reply(ret_result);
+          });
+
+        }
+        else
+        {
+          var query = search.searchBook(message.Content, function(error, book) {
             res.reply([
             {
               title: book.title + "  " + book.author+ "  " +"评分:"+ book.rating,
@@ -38,10 +56,11 @@ app.use('/wechat', wechat(config, function (req, res, next) {
             }
             ]);
         });
+        }
     }
     else 
     {
-      res.reply("请发送书名，以查询书籍~~");
+      res.reply("请发送书名，以查询书籍~~\n也可以查询2014/12月的CET成绩，格式如下：CET+120120142205409+王幼根");
     }
 }));
 // app.use('/wechat', wechat(config, function (req, res, next) {
